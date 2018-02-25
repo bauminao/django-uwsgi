@@ -18,37 +18,59 @@ MAINTAINER Dockerfiles
 
 # Install required packages and remove the apt packages cache when done.
 
-RUN apt-get update && \
-    apt-get upgrade -y && \ 
-    apt-get install -y \
-	git \
-	python \
-	python-dev \
-	python-setuptools \
-	python-pip \
-	supervisor \
-	sqlite3 && \
-	pip install -U pip setuptools && \
-  	rm -rf /var/lib/apt/lists/*
+RUN apt-get update      \
+  && apt-get upgrade -y \ 
+  && apt-get install -y \
+      git               \
+      python            \
+      python-dev        \
+      python-setuptools \
+      python-pip        \
+      python-virtualenv \
+      supervisor        \
+      sqlite3           \
+  && pip install -U pip setuptools \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN useradd --user-group --create-home --shell /bin/false docker  \
+  && mkdir -p /home/docker/logs
+
+USER docker 
+
+# Create virtual environment
+RUN cd /home/docker    \
+  && virtualenv django
 
 # install uwsgi now because it takes a little while
-RUN pip install uwsgi
+RUN cd /home/docker/django \
+  && . bin/activate        \
+  && pip install uwsgi
 
-# setup all the configfiles
+## setup all the configfiles
 COPY supervisor-app.conf /etc/supervisor/conf.d/
+COPY uwsgi.ini requirements.txt /home/docker/django/
 
-# COPY requirements.txt and RUN pip install BEFORE adding the rest of your code, this will cause Docker's caching mechanism
-# to prevent re-installinig (all your) dependencies when you made a change a line or two in your app.
+RUN cd /home/docker/django     \
+  && . bin/activate            \
+  && pip install -r requirements.txt 
 
-COPY app/requirements.txt /home/docker/code/app/
-RUN pip install -r /home/docker/code/app/requirements.txt
+## install django, normally you would remove this step because your project would already
+## be installed in the code/app/ directory
 
-# add (the rest of) our code
-COPY . /home/docker/code/
+RUN cd /home/docker/django \
+  && . bin/activate        \
+  && django-admin.py startproject app01
 
-# install django, normally you would remove this step because your project would already
-# be installed in the code/app/ directory
-RUN django-admin.py startproject website /home/docker/code/app/
+## add (the rest of) our code
+COPY app01/* /home/docker/django/app01/
 
-EXPOSE 80
+
+EXPOSE 8000
+EXPOSE 8001
+
+USER root
 CMD ["supervisord", "-n"]
+#CMD ["/bin/bash"]
+
+#  && pip install Django   \
+#  && django-admin.py startproject mysite \
