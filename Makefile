@@ -36,6 +36,14 @@ run: clean
 	sleep 1
 	docker logs --details ${CONTAINER_NAME}
 
+debug: clean
+	docker run --name=${CONTAINER_NAME} \
+	-p 8000:8000                        \
+	-v ${pwd}:/home/docker/django       \
+	-ti ${IMAGE_NAME}
+	sleep 1
+	docker logs --details ${CONTAINER_NAME}
+
 runbg: clean
 	docker run --name=${CONTAINER_NAME} \
 	-p 8000:8000                        \
