@@ -29,10 +29,17 @@ stop:
 restart: stop
 	docker restart ${CONTAINER_NAME}
 
-run: 
+run: clean
 	docker run --name=${CONTAINER_NAME} \
 	-p 8000:8000                        \
-	-ti -d ${IMAGE_NAME}
+	-ti ${IMAGE_NAME}
+	sleep 1
+	docker logs --details ${CONTAINER_NAME}
+
+runbg: clean
+	docker run --name=${CONTAINER_NAME} \
+	-p 8000:8000                        \
+	-ti -p ${IMAGE_NAME}
 	sleep 1
 	docker logs --details ${CONTAINER_NAME}
 
