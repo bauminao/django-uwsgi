@@ -32,7 +32,6 @@ restart: stop
 run: 
 	docker run --name=${CONTAINER_NAME} \
 	-p 8000:8000                        \
-	-p 8001:8001                        \
 	-ti -d ${IMAGE_NAME}
 	sleep 1
 	docker logs --details ${CONTAINER_NAME}
